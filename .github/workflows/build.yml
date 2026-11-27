@@ -1,0 +1,53 @@
+name: build
+
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Track upstream HEAD
+        id: track
+        run: |
+          latest=$(git ls-remote https://github.com/yuja/hhkb-studio-tools HEAD | cut -f1)
+          if [ "$latest" = "$(cat UPSTREAM_COMMIT)" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "$latest" > UPSTREAM_COMMIT
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "bump upstream to ${latest:0:7}"
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Build .deb
+        if: steps.track.outputs.changed == 'true' || github.event_name != 'schedule'
+        run: |
+          cargo install --locked cargo-deb
+          ./build.sh
+          echo "VERSION=$(cat dist/VERSION)" >> "$GITHUB_ENV"
+
+      - name: Release
+        if: env.VERSION != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v$VERSION"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "release $tag already exists"
+          else
+            gh release create "$tag" dist/*.deb --target "$(git rev-parse HEAD)" \
+              --title "hhkb-studio-tools $VERSION" \
+              --notes "Built from yuja/hhkb-studio-tools@$(cat UPSTREAM_COMMIT)"
+          fi

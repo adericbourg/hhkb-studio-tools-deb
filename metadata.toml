@@ -1,0 +1,12 @@
+
+[package.metadata.deb]
+maintainer = "Alban Dericbourg <adericbourg@users.noreply.github.com>"
+copyright = "Yuya Nishihara"
+extended-description = "Command-line tool to read and write the keymap of the HHKB Studio keyboard over hidraw."
+section = "utils"
+priority = "optional"
+depends = "$auto"
+assets = [
+    ["target/release/hhkb-studio-tools", "usr/bin/", "755"],
+    ["README.md", "usr/share/doc/hhkb-studio-tools/", "644"],
+]
