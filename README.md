@@ -25,7 +25,7 @@ See the [upstream README](https://github.com/yuja/hhkb-studio-tools#usage) for u
 ## How it works
 
 - `UPSTREAM_COMMIT` pins the upstream commit that gets packaged.
-- A daily workflow compares it with upstream `HEAD`. When upstream moved, it bumps the pin,
+- A weekly workflow compares it with upstream `HEAD`. When upstream moved, it bumps the pin,
   builds the `.deb`, publishes it as a GitHub release and deploys a signed APT repo to GitHub Pages.
 - Version scheme: `0.0.0+git<upstream commit count>.<short sha>`, e.g. `0.0.0+git43.cf3255f`.
   The count only grows, so APT always sees a newer version.
