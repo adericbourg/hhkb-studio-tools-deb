@@ -61,9 +61,12 @@ jobs:
         env:
           APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq apt-utils
           mkdir repo && cp dist/*.deb repo/
           cd repo
-          apt-ftparchive packages . > Packages && gzip -k Packages
+          apt-ftparchive packages . > Packages
+          gzip -k Packages
           apt-ftparchive release . > Release
           echo "$APT_SIGNING_KEY" | gpg --batch --import
           gpg --batch --yes --clearsign -o InRelease Release
