@@ -13,8 +13,8 @@ grep -q '^description' "$src/Cargo.toml" ||
   sed -i '/^\[package\]/a description = "Linux tool to modify HHKB Studio keymap"' "$src/Cargo.toml"
 cat "$here/metadata.toml" >> "$src/Cargo.toml"
 
-cargo_version=$(sed -n 's/^version = "\(.*\)"/\1/p' "$src/Cargo.toml" | head -1)
-version="$cargo_version+git$(git -C "$src" log -1 --format=%cd --date=format:%Y%m%d).$(git -C "$src" rev-parse --short=7 HEAD)"
+# Fixed 0.0.0 prefix: any real upstream release sorts above these snapshots.
+version="0.0.0+git$(git -C "$src" rev-list --count HEAD).$(git -C "$src" rev-parse --short=7 HEAD)"
 
 mkdir -p "$here/dist"
 (cd "$src" && cargo deb --locked --deb-version "$version" --output "$here/dist/")
