@@ -9,10 +9,13 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: github-pages
     steps:
       - uses: actions/checkout@v7
 
@@ -51,3 +54,26 @@ jobs:
               --title "hhkb-studio-tools $VERSION" \
               --notes "Built from yuja/hhkb-studio-tools@$(cat UPSTREAM_COMMIT)"
           fi
+
+      # shortcut: only the latest .deb is served, so APT cannot roll back; publish all release assets if that is ever needed.
+      - name: Build APT repo
+        if: env.VERSION != ''
+        env:
+          APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
+        run: |
+          mkdir repo && cp dist/*.deb repo/
+          cd repo
+          apt-ftparchive packages . > Packages && gzip -k Packages
+          apt-ftparchive release . > Release
+          echo "$APT_SIGNING_KEY" | gpg --batch --import
+          gpg --batch --yes --clearsign -o InRelease Release
+          gpg --batch --yes -abs -o Release.gpg Release
+          gpg --export > hhkb-studio-tools.gpg
+
+      - uses: actions/upload-pages-artifact@v5
+        if: env.VERSION != ''
+        with:
+          path: repo
+
+      - uses: actions/deploy-pages@v5
+        if: env.VERSION != ''
